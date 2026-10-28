@@ -6,11 +6,13 @@ name: QCA-ALL
 
 #CI计划
 on:
-  #自动编译：当Auto-Clean运行完成后
-  workflow_run:
-    workflows: ["Auto-Clean"]
-    types:
-      - completed
+  #代码变更时自动编译（只关心配置与构建脚本）
+  push:
+    branches: [main]
+    paths:
+      - 'Config/**'
+      - 'Scripts/**'
+      - '.github/scripts/**'
   #手动编译
   workflow_dispatch:
     inputs:
