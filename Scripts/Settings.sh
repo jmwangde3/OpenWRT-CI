@@ -52,3 +52,24 @@ if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
 		echo "qualcommax set up nowifi successfully!"
 	fi
 fi
+
+#NSS：默认关闭 OpenWrt 的软件/硬件流量卸载（两套机制冲突）
+FW4_PATCH="./package/network/config/firewall4/patches/002-default-enable-fullcone.patch"
+if [ -f "$FW4_PATCH" ]; then
+	sed -i -E 's/^\+[[:space:]]*option flow_offloading[[:space:]]+1$/+\toption flow_offloading\t0/' "$FW4_PATCH"
+	sed -i -E 's/^\+[[:space:]]*option flow_offloading_hw[[:space:]]+1$/+\toption flow_offloading_hw\t0/' "$FW4_PATCH"
+	echo "NSS: default flow offloading disabled in firewall4 patch"
+fi
+
+#首次启动兜底：关闭软件/硬件卸载和 packet steering，保留全锥默认值
+mkdir -p ./files/etc/uci-defaults
+cat > ./files/etc/uci-defaults/99-nss-offload <<'EOF'
+#!/bin/sh
+uci -q set firewall.@defaults[0].flow_offloading='0'
+uci -q set firewall.@defaults[0].flow_offloading_hw='0'
+uci -q set network.globals.packet_steering='0'
+uci -q commit firewall
+uci -q commit network
+exit 0
+EOF
+chmod +x ./files/etc/uci-defaults/99-nss-offload
