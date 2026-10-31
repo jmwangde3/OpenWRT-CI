@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: MIT
+# 每天检查一次上游源码仓库；有变动才触发 QCA-ALL
+name: Upstream-Watch
+
+on:
+  # 每天 21:00（北京时间）= UTC 13:00
+  schedule:
+    - cron: '0 13 * * *'
+  # 手动运行：首次用来写入基线，之后可手动检查
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: upstream-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restore last seen upstream SHAs
+        uses: actions/cache/restore@v4
+        with:
+          path: .upstream-state
+          key: upstream-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            upstream-state-
+
+      - name: Check upstream and dispatch QCA-ALL
+        env:
+          UPSTREAM: https://github.com/VIKINGYFY/immortalwrt.git
+          TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir -p .upstream-state
+          changed=""
+          seen=0
+          for b in main owrt; do
+            remote=$(git ls-remote --heads "$UPSTREAM" "refs/heads/$b" | awk '{print $1}')
+            if [ -z "$remote" ]; then
+              echo "missing upstream branch: $b"
+              exit 1
+            fi
+            old=$(cat ".upstream-state/$b" 2>/dev/null || true)
+            if [ -n "$old" ]; then
+              seen=1
+            fi
+            echo "$b: remote=$remote old=${old:-<none>}"
+            if [ "$remote" != "$old" ]; then
+              if [ -n "$changed" ]; then
+                changed="$changed,"
+              fi
+              changed="${changed}$b"
+            fi
+            printf '%s\n' "$remote" > ".upstream-state/$b"
+          done
+          if [ "$seen" -eq 0 ]; then
+            echo "first run: seeded, no build"
+            exit 0
+          fi
+          if [ -z "$changed" ]; then
+            echo "upstream unchanged"
+            exit 0
+          fi
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/QCA-ALL.yml/dispatches" \
+            -d "{\"ref\":\"main\",\"inputs\":{\"BRANCHES\":\"$changed\"}}"
+          echo "dispatched QCA-ALL: $changed"
+
+      - name: Save state
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: .upstream-state
+          key: upstream-state-${{ github.run_id }}-${{ github.run_attempt }}
