@@ -55,10 +55,10 @@ sed -i "s/ssid='.*'/ssid='$WRT_SSID'/g; s/key='.*'/key='$WRT_WORD'/g" "$WIFI_UC"
 ```
    - 不要因为上游删掉 NSS 块就跟着删。
 
-6. `Scripts/Handles.sh` 必须保留 vantage 的两处修复（注释里的 `#51` 和 `#52`）：
-   - 表单说明宽度：删除 `.cbi-map-descr` / `.cbi-value-description` 的 max-width，修改 `.cbi-section-descr`。
-   - 进度条标签字体：把 `.cbi-progressbar::before` 的 `font: 500 var(--fs-micro)/1.2 var(--mono)` 改成 `font: inherit; line-height: normal`。
-   - 上游可能只保留其中一个，两个都要有。
+6. `Scripts/Handles.sh`：跟上游即可。
+   - 上游保留 vantage `#52`（进度条标签字体），保持它。
+   - `#51` 的表单说明宽度已由上游主题删掉 `max-width`，不再需要；旧 sed 是空操作，不要加回。
+   - 只有布局问题重新出现时才临时补，不列入必保项。
 
 7. `Config/GENERAL.txt` 保留我们的包选择：
    - `luci-app-homeproxy=n`
@@ -113,7 +113,7 @@ grep -n '99-nss-offload\|theme-vantage' Scripts/Settings.sh Scripts/Handles.sh
 | QCA-ALL 改成 Auto-Clean/workflow_run/owrt-only | 用我们的两 job 版本覆盖 |
 | `Config/IPQ807X-WIFI-YES.txt` 恢复到全设备 | 收窄到两台 stock |
 | Settings 删掉 main NSS 块 | 加回 |
-| Handles 只剩一个 vantage 修复 | 两个都加回 |
+| Handles 只剩 `#52` | 正常，跟上游；`#51` 已过时 |
 | GENERAL 加回 USB/ATA/声音/Samba 等 | 按我们的包表裁剪 |
 | Packages 加回 vnt | 再删 |
 | 上游 source 更新 | 不合并仓库；QCA-ALL 构建时拉 branch HEAD |
