@@ -61,6 +61,8 @@ jobs:
       WRT_REPO: https://github.com/VIKINGYFY/immortalwrt.git
       #源码分支
       WRT_BRANCH: main
+      #源码提交：固定到 2026-10-09「traditional NSS adaptations」合并之前（WiFi 发送速率塌陷的回退点）
+      WRT_REVISION: eb3c2feac935745b2cadece4ab3888858aa53b47
       #源码名称
       WRT_SOURCE: VIKINGYFY/immortalwrt
       #插件调整

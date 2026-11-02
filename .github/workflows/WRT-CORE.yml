@@ -34,6 +34,10 @@ on:
       WRT_BRANCH:
         required: true
         type: string
+      WRT_REVISION:
+        required: false
+        type: string
+        default: ''
       WRT_SOURCE:
         required: true
         type: string
@@ -56,6 +60,7 @@ env:
   WRT_PW: ${{inputs.WRT_PW}}
   WRT_REPO: ${{inputs.WRT_REPO}}
   WRT_BRANCH: ${{inputs.WRT_BRANCH}}
+  WRT_REVISION: ${{inputs.WRT_REVISION}}
   WRT_SOURCE: ${{inputs.WRT_SOURCE}}
   WRT_PACKAGE: ${{inputs.WRT_PACKAGE}}
   WRT_TEST: ${{inputs.WRT_TEST}}
@@ -125,7 +130,15 @@ jobs:
       - name: Clone Code
         id: clone-code
         run: |
-          git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
+          if [ -n "$WRT_REVISION" ]; then
+            # 固定源码到指定提交（历史版本回退用）：按 SHA 浅取，只拉该提交
+            git init -q ./wrt
+            git -C ./wrt remote add origin "$WRT_REPO"
+            git -C ./wrt fetch -q --depth=1 --filter=blob:none origin "$WRT_REVISION"
+            git -C ./wrt checkout -q FETCH_HEAD
+          else
+            git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
+          fi
 
           cd ./wrt/
           WRT_HASH=$(git rev-parse HEAD)
