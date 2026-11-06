@@ -66,6 +66,7 @@ CONFIG_PACKAGE_openssh-keygen=y
 CONFIG_PACKAGE_openssh-sftp-server=y
 CONFIG_PACKAGE_openssl-util=y
 CONFIG_PACKAGE_proto-bonding=y
+CONFIG_PACKAGE_unzip=y
 CONFIG_PACKAGE_xz-utils=y
 
 #关闭未使用的共享/发现与 PassWall 组件
