@@ -31,6 +31,13 @@ echo "CONFIG_PACKAGE_luci-theme-$WRT_THEME=y" >> ./.config
 echo "CONFIG_PACKAGE_luci-app-$WRT_THEME=y" >> ./.config
 echo "CONFIG_PACKAGE_luci-app-$WRT_THEME-config=y" >> ./.config
 
+#叠加自定义根文件系统文件（sysctl.d / modules.d 等编译默认值，随仓库 files/ 目录维护）
+if [ -d "$GITHUB_WORKSPACE/files" ]; then
+	mkdir -p ./files
+	cp -a "$GITHUB_WORKSPACE/files/." ./files/
+	echo "overlay files/ applied: $(find ./files -type f | wc -l) file(s)"
+fi
+
 #引入私有扩展配置
 if [ -f "$GITHUB_WORKSPACE/Config/PRIVATE.txt" ]; then
 	echo "Applying private configurations from PRIVATE.txt..."
